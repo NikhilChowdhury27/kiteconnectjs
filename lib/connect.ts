@@ -1,6 +1,6 @@
 'use strict';
 
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosTransformer, Method } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponseTransformer, Method } from 'axios';
 import csvParse from 'papaparse';
 import sha256 from 'crypto-js/sha256';
 import qs from 'qs';
@@ -936,11 +936,11 @@ export class KiteConnect implements KiteConnectInterface {
      * @param {string} route
      * @param {?(AnyObject | null)} [params]
      * @param {?(string | null)} [responseType]
-     * @param {?AxiosTransformer} [responseTransformer]
+     * @param {?AxiosResponseTransformer} [responseTransformer]
      * @param {boolean} [isJSON=false]
      * @returns {*}
      */
-    private _get(route: string, params?: AnyObject | null, responseType?: string | null, responseTransformer?: AxiosTransformer, isJSON = false) {
+    private _get(route: string, params?: AnyObject | null, responseType?: string | null, responseTransformer?: AxiosResponseTransformer, isJSON = false) {
         return this.request(route, 'GET', params || {}, responseType, responseTransformer, isJSON);
     }
 
@@ -951,12 +951,12 @@ export class KiteConnect implements KiteConnectInterface {
      * @param {string} route
      * @param {(AnyObject | null)} params
      * @param {?(string | null)} [responseType]
-     * @param {?AxiosTransformer} [responseTransformer]
+     * @param {?AxiosResponseTransformer} [responseTransformer]
      * @param {boolean} [isJSON=false]
      * @param {(AnyObject | null)} [queryParams=null]
      * @returns {*}
      */
-    private _post(route: string, params: AnyObject | null, responseType?: string | null, responseTransformer?: AxiosTransformer, isJSON = false, queryParams: AnyObject | null = null) {
+    private _post(route: string, params: AnyObject | null, responseType?: string | null, responseTransformer?: AxiosResponseTransformer, isJSON = false, queryParams: AnyObject | null = null) {
         return this.request(route, 'POST', params || {}, responseType, responseTransformer, isJSON, queryParams);
     }
 
@@ -967,12 +967,12 @@ export class KiteConnect implements KiteConnectInterface {
      * @param {string} route
      * @param {(AnyObject | null)} params
      * @param {?(string | null)} [responseType]
-     * @param {?AxiosTransformer} [responseTransformer]
+     * @param {?AxiosResponseTransformer} [responseTransformer]
      * @param {boolean} [isJSON=false]
      * @param {*} [queryParams=null]
      * @returns {*}
      */
-    private _put(route: string, params: AnyObject | null, responseType?: string | null, responseTransformer?: AxiosTransformer, isJSON = false, queryParams = null) {
+    private _put(route: string, params: AnyObject | null, responseType?: string | null, responseTransformer?: AxiosResponseTransformer, isJSON = false, queryParams = null) {
         return this.request(route, 'PUT', params || {}, responseType, responseTransformer, isJSON, queryParams);
     }
 
@@ -983,11 +983,11 @@ export class KiteConnect implements KiteConnectInterface {
      * @param {string} route
      * @param {(AnyObject | null)} params
      * @param {?(string | null)} [responseType]
-     * @param {?AxiosTransformer} [responseTransformer]
+     * @param {?AxiosResponseTransformer} [responseTransformer]
      * @param {boolean} [isJSON=false]
      * @returns {*}
      */
-    private _delete(route: string, params: AnyObject | null, responseType?: string | null, responseTransformer?: AxiosTransformer, isJSON = false) {
+    private _delete(route: string, params: AnyObject | null, responseType?: string | null, responseTransformer?: AxiosResponseTransformer, isJSON = false) {
         return this.request(route, 'DELETE', params || {}, responseType, responseTransformer, isJSON);
     }
 
@@ -999,12 +999,12 @@ export class KiteConnect implements KiteConnectInterface {
      * @param {Method} method
      * @param {AnyObject} params
      * @param {?(string | null)} [responseType]
-     * @param {?AxiosTransformer} [responseTransformer]
+     * @param {?AxiosResponseTransformer} [responseTransformer]
      * @param {?boolean} [isJSON]
      * @param {?(Record<string, any> | null)} [queryParams]
      * @returns {*}
      */
-    private request(route: string, method: Method, params: AnyObject, responseType?: string | null, responseTransformer?: AxiosTransformer, isJSON?: boolean, queryParams?: Record<string, any> | null) {
+    private request(route: string, method: Method, params: AnyObject, responseType?: string | null, responseTransformer?: AxiosResponseTransformer, isJSON?: boolean, queryParams?: Record<string, any> | null) {
         // Check access token
         if (!responseType) responseType = 'json';
         let uri = ROUTES[route];
@@ -1032,26 +1032,27 @@ export class KiteConnect implements KiteConnectInterface {
             }
         }
 
+        const headers: Record<string, string> = {};
+
         const options: AxiosRequestConfig = {
             method,
-            url: uri,
+            url: `${this.root}${uri}`,
             params: queryParams,
             data: payload,
-            // Set auth header
-            headers: {}
+            headers
         };
 
         // Send auth token
         if (this.access_token) {
             const authHeader = `${this.api_key}:${this.access_token}`;
-            options['headers']['Authorization'] = `token ${authHeader}`;
+            headers['Authorization'] = `token ${authHeader}`;
         }
 
         // Set request header content type
         if (isJSON) {
-            options['headers']['Content-Type'] = 'application/json';
+            headers['Content-Type'] = 'application/json';
         } else {
-            options['headers']['Content-Type'] = 'application/x-www-form-urlencoded';
+            headers['Content-Type'] = 'application/x-www-form-urlencoded';
         }
         // Set response transformer
         if (responseTransformer) {
